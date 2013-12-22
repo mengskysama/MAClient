@@ -139,8 +139,8 @@ class maClient():
             eval_fairy_select_carddeck)
         self.evalstr_factor = self._eval_gen(self._read_config('condition', 'factor'), [])
         # tasker须动态生成#self.evalstr_task=self._eval_gen(self._read_config('system','tasker'),[])
-        logging.debug('system:知识库版本 %s%s' % (maclient_smart.__version__, str(maclient_smart).endswith('pyd\'>') and ' C-Extension' or ''))
-        logging.debug('system:初始化完成(服务器:%s)' % self.loc)
+        logging.debug('system:knowledge library ber %s%s' % (maclient_smart.__version__, str(maclient_smart).endswith('pyd\'>') and ' C-Extension' or ''))
+        logging.debug('system:init done(Server:%s)' % self.loc)
         self.lastposttime = 0
         self.lastfairytime = 0
         self.errortimes = 0
@@ -241,11 +241,11 @@ class maClient():
                         resp.update({'error':True, 'errno':int(err.code)})
                     if err.code == '9000':
                         self._write_config('account_%s' % self.loc, 'session', '')
-                        logging.info('A一个新的小饼干……')
+                        logging.info('A new Cookie get!')
                         self.login(fast = True)
                         return self._dopost(urikey, postdata, usecookie, setcookie, extraheader, xmlresp, noencrypt)
                     elif err.code == '1020':
-                        logging.sleep('因为服务器维护，休息约30分钟')
+                        logging.sleep('Game server maintenance..WAIT 30 min')
                         time.sleep(random.randint(28, 32) * 60)
                         self.player.update_checked = False  # 置为未检查
                         return resp, dec
@@ -255,18 +255,18 @@ class maClient():
                 # check revision update
                 if self.player.need_update[0] or self.player.need_update[1]:
                     if self.cfg_auto_update:
-                        logging.info('更新%s%s数据……' % (
-                            ' 卡片' if self.player.need_update[0] else '',
-                            ' 道具' if self.player.need_update[1] else ''))
+                        logging.info('update %s%sdate..' % (
+                            ' Card' if self.player.need_update[0] else '',
+                            ' Tool' if self.player.need_update[1] else ''))
                         import maclient_update
                         crev, irev = maclient_update.update_master(self.loc, self.player.need_update, self.poster)
                         logging.info('%s%s' % (
-                            '卡片数据更新为rev.%s' % crev if crev else '',
-                            '道具数据更新为rev.%s' % irev if irev else ''))
+                            'New Card rev.%s' % crev if crev else '',
+                            'Tool Data rev.%s' % irev if irev else ''))
                         self.player.reload_db()
                         self.player.need_update = False, False
                     else:
-                        logging.warning('检测到服务器游戏数据与游戏数据不一致，请手动更新数据库')
+                        logging.warning('Local data is different game Server. plz update')
                 if not resp['error']:
                     # update profile
                     update_dt = self.player.update_all(dec)
@@ -293,7 +293,7 @@ class maClient():
                         logging.debug('post:master cards saved.')
                     # auto check cards and fp
                     if not self.auto_check(urikey):
-                        logging.error('由于以上↑的原因，无法继续执行！')
+                        logging.error('because up reason can not continue')
                         self._exit(1)
         if setcookie and 'set-cookie' in resp:
             self.cookie = resp['set-cookie'].split(',')[-1].rstrip('path=/').strip()
@@ -352,7 +352,7 @@ class maClient():
         if taskname == '':
             taskname = self._read_config('system', 'taskname')
             if taskname == '':
-                logging.info('没有配置任务！')
+                logging.info('no task')
                 return
         if  cmd != '':
             tasks = cmd
@@ -435,12 +435,12 @@ class maClient():
                     self.like(words = task[1])
                 elif task[0] in ['sleep', 'slp']:
                     slptime = float(eval(self._eval_gen(task[1])))
-                    logging.sleep('睡觉%s分' % slptime)
+                    logging.sleep('sleep %s min' % slptime)
                     time.sleep(slptime * 60)
                 else:
                     logging.warning('command "%s" not recognized.' % task[0])
                 if cnt != 1:
-                    logging.sleep('tasker:正在滚床单wwww')
+                    logging.sleep('tasker:zheng zai gun chuang dan')
                     time.sleep(3.15616546511)
                     resp, ct = self._dopost('mainmenu')  # 初始化
 
@@ -471,23 +471,23 @@ class maClient():
                 self._dopost('notification/post_devicetoken', postdata =pdata , xmlresp = False)
             resp, ct = self._dopost('login', postdata = 'login_id=%s&password=%s' % (self.username, self.password))
             if resp['error']:
-                logging.info('登录失败しました')
+                logging.info('Lgoin faided')
                 self._exit(1)
             else:
                 pdata = ct.header.your_data
-                logging.info('[%s] 登录成功!\n' % self.username + \
-                    'AP:%s/%s BC:%s/%s 金:%s 基友点:%s %s\n' % (
+                logging.info('[%s] Login success\n' % self.username + \
+                    'AP:%s/%s BC:%s/%s glod:%s gay point:%s %s\n' % (
                         pdata.ap.current, pdata.ap.max,
                         pdata.bc.current, pdata.bc.max,
                         pdata.gold, pdata.friendship_point,
-                        pdata.fairy_appearance == '1' and '妖精出现中!!' or '') +
-                    '蛋蛋卷:%s 等级:%s 完成度:%s %s%s%s\n' % (
+                        pdata.fairy_appearance == '1' and 'fairy find!!' or '') +
+                    'eggs:%s lv:%s completed:%s %s%s%s\n' % (
                         pdata.gacha_ticket,
                         pdata.town_level,
                         pdata.percentage,
-                        pdata.free_ap_bc_point != '0' and '有未分配的点数yo~ ' or '',
-                        pdata.friends_invitations != '0' and '收到好友邀请了呢 ' or '',
-                        ct.body.mainmenu.rewards == '1' and '收到礼物了~' or '')
+                        pdata.free_ap_bc_point != '0' and 'has no fen pei point' or '',
+                        pdata.friends_invitations != '0' and 'get a invited ' or '',
+                        ct.body.mainmenu.rewards == '1' and 'get a gift' or '')
                 )
                 self._write_config('account_%s' % self.loc, 'username', self.username)
                 self._write_config('record', 'last_set_card', '')
@@ -521,19 +521,19 @@ class maClient():
         if doingwhat in ['exploration/fairybattle', 'exploration/explore', 'gacha/buy']:
             if int(self.player.card.count) >= getattr(maclient_smart, 'max_card_count_%s' % self.loc):
                 if self.cfg_auto_sell:
-                    logging.info('卡片放满了，自动卖卡 v(￣▽￣*)')
+                    logging.info('card is full auto sell')
                     return self.select_card_sell()
                 else:
-                    logging.warning('卡片已经放不下了，请自行卖卡www')
+                    logging.warning('card is full please sell by yourself')
                     return False
             if self.player.friendship_point > getattr(maclient_smart, 'max_fp_%s' % self.loc) * 0.9 and \
                 not doingwhat in ['gacha/buy', 'gacha/select/getcontents']:
                 if self.cfg_autogacha:
-                    logging.info('绊点有点多，自动转蛋(*￣▽￣)y ')
+                    logging.info('point is out of range .. let we do')
                     self.gacha(gacha_type = GACHA_FRIENNSHIP_POINT)
                     return True
                 else:
-                    logging.warning('绊点已经很多，请自行转蛋消耗www')
+                    logging.warning('point is out of range plz do')
                     return False
         return True
 
@@ -544,7 +544,7 @@ class maClient():
         last_set_bc = self._read_config('record', 'last_set_bc') or '0'
         last_set_bc = int(last_set_bc)
         if self.player.bc['current'] < last_set_bc:
-            logging.warning('strict_bc:严格BC模式已触发www')
+            logging.warning('strict_bc: yan ge bc module opened')
             return True
         else:
             logging.debug('strict_bc:nothing happened~')
@@ -618,7 +618,7 @@ class maClient():
                     atk, hp, last_set_bc, sid, mid = res
                     param = map(lambda x:str(x), sid)
                     # 别看比较好
-                    print(du8('设置卡组为: ATK:%d HP:%d COST:%d\n%s' % (
+                    print(du8('set card: ATK:%d HP:%d COST:%d\n%s' % (
                         sum(atk),
                         hp,
                         last_set_bc,
@@ -682,20 +682,20 @@ class maClient():
                 break
             if self._dopost('roundtable/edit', postdata = 'move=1')[0]['error']:
                 break
-            logging.sleep('休息%d秒，假装在找卡' % t)
+            logging.sleep('sleep %d sec，jia zhuang zai find card' % t)
             time.sleep(t)
             postparam = 'C=%s&lr=%s' % (','.join(param), lc)
             if self.loc != 'tw':#cn, jp, kr:
                 postparam = '%s&deck_id=1'%postparam
             if self._dopost('cardselect/savedeckcard', postdata = postparam)[0]['error']:
                 break
-            logging.info('成功更换卡组为%s cost%d' % (deckkey, last_set_bc))
+            logging.info('set card: %s cost%d' % (deckkey, last_set_bc))
             # 保存
             self._write_config('record', 'last_set_card', self._read_config('carddeck', deckkey))
             # 记录BC
             self._write_config('record', 'last_set_bc', str(last_set_bc))
             return True
-        logging.info('卡组没有改变')
+        logging.info('card deck not change')
         return False
 
 
@@ -705,7 +705,7 @@ class maClient():
         if resp['error']:
             return False
         else:
-            logging.info('使用了道具 %s' % self.player.item.get_name(int(itemid)))
+            logging.info('use tools %s' % self.player.item.get_name(int(itemid)))
             logging.debug('useitem:item %s : %s left' % (itemid, self.player.item.get_count(int(itemid))))
             return True
 
@@ -720,7 +720,7 @@ class maClient():
                 logging.debug('red_tea:auto mode, let it go~')
                 return False
             else:
-                if raw_inputd('来一坨红茶？ y/n ') == 'y':
+                if raw_inputd('use bc? y/n ') == 'y':
                     res = self._use_item('2')
                 else:
                     res = False
@@ -739,7 +739,7 @@ class maClient():
                 logging.debug('green_tea:auto mode, let it go~')
                 return False
             else:
-                if raw_inputd('嗑一瓶绿茶？ y/n ') == 'y':
+                if raw_inputd('use ap? y/n ') == 'y':
                     res = self._use_item('1')
                 else:
                     res = False
@@ -852,7 +852,7 @@ class maClient():
                 info = ct.body.explore
                 logging.debug('explore:event_type:' + info.event_type)
                 if info.event_type != '6':
-                    logging.info('获得:%sG %sEXP, 进度:%s, 升级剩余:%s' % (info.gold, info.get_exp, info.progress, info.next_exp))
+                    logging.info('get:%sG %sEXP, process:%s, lv left:%s' % (info.gold, info.get_exp, info.progress, info.next_exp))
                     # 已记录1 2 3 4 5 12 13 15 19
                     if info.event_type == '1':
                         '''<fairy>
@@ -866,14 +866,14 @@ class maClient():
                                 <event_chara_flg>0</event_chara_flg>
                         </fairy>'''
                         info.fairy.lv, info.fairy.hp = int(info.fairy.lv), int(info.fairy.hp)
-                        logging.info('碰到只妖精:%s lv%d hp%d' % (info.fairy.name, info.fairy.lv, info.fairy.hp))
+                        logging.info('find a fairy:%s lv%d hp%d' % (info.fairy.name, info.fairy.lv, info.fairy.hp))
                         logging.debug('sid' + info.fairy.serial_id + ' mid' + info.fairy.master_boss_id + ' uid' + info.fairy.discoverer_id)
                         self.player.fairy = {'id':info.fairy.serial_id, 'alive':True}
                         # evalfight=self._eval_gen(self._read_config('condition','encounter_fairy'),\
                         #    {'fairy':'info.fairy'})
                         # logging.debug('eval:%s result:%s'%(evalfight,eval(evalfight)))
                         # if eval(evalfight):
-                        logging.sleep('3秒后开始战斗www')
+                        logging.sleep('3 sec begin battle www')
                         time.sleep(3)
                         self._fairy_battle(info.fairy, bt_type = EXPLORE_BATTLE)
                         time.sleep(5.5)
@@ -885,19 +885,19 @@ class maClient():
                             )[0]['error']:
                             return None, EXPLORE_ERROR
                     elif info.event_type == '2':
-                        logging.info('碰到个傻X：{0} -> {1}'.format(info.encounter.name, info.message).replace('%', '%%'))
+                        logging.info('see a sha X：{0} -> {1}'.format(info.encounter.name, info.message).replace('%', '%%'))
                         time.sleep(1.5)
                     elif info.event_type == '3':
                         usercard = info.user_card
                         logging.debug('explore:cid %s sid %s' % (usercard.master_card_id, usercard.serial_id))
-                        logging.info('获得了 %s ☆%s' % (self.carddb[int(usercard.master_card_id)][0],
+                        logging.info('get %s ☆%s' % (self.carddb[int(usercard.master_card_id)][0],
                             self.carddb[int(usercard.master_card_id)][1]))
                     elif info.event_type == '15':
                         compcard = info.autocomp_card[-1]
                         logging.debug('explore:cid %s sid %s' % (
                             compcard.master_card_id,
                             compcard.serial_id))
-                        logging.info('合成了 %s lv%s exp%s nextexp%s' % (
+                        logging.info('merge %s lv%s exp%s nextexp%s' % (
                                 self.carddb[int(compcard.master_card_id)][0],
                                 compcard.lv,
                                 compcard.exp,
@@ -911,9 +911,9 @@ class maClient():
                         else:
                             return None, EXPLORE_OK
                     elif info.event_type == '12':
-                        logging.info('AP回复~')
+                        logging.info('AP get~')
                     elif info.event_type == '13':
-                        logging.info('BC回复~')
+                        logging.info('BC get~')
                     elif info.event_type == '19':
                         try:
                             itemid = info.special_item.item_id
@@ -923,21 +923,21 @@ class maClient():
                             itembefore = int(info.special_item.before_count)
                             itemnow = int(info.special_item.after_count)
                             logging.debug('explore:itemid:%s' % (itemid))
-                            logging.info('获得收集品[%s] x%d' % (self.player.item.get_name(int(itemid)), itemnow - itembefore))
+                            logging.info('get new wu ping [%s] x%d' % (self.player.item.get_name(int(itemid)), itemnow - itembefore))
                     elif info.event_type == '4':
-                        logging.info('获得了因子碎片 湖:%s 碎片:%s' % (
+                        logging.info('get sui pian hu:%s sui pian:%s' % (
                             info.parts_one.lake_id, info.parts_one.parts.parts_num))
                         if len(ct) > 10000:
-                            logging.info('收集碎片合成了新的骑士卡片！')
+                            logging.info('sui bian he cheng xin card')
                 else:
-                    logging.warning('AP不够了TUT')
+                    logging.warning('AP not gou TUT')
                     if not self.green_tea(self.cfg_auto_explore):
                         logging.error('不给喝，不走了o(￣ヘ￣o＃) ')
                         return None, EXPLORE_NO_AP
                     else:
                         continue
                 if info.lvup == '1':
-                    logging.info('升级了：↑%s' % self.player.lv)
+                    logging.info('LV UP：%s' % self.player.lv)
                     time.sleep(3)
                 # if info.progress=='100':
                 #     break
@@ -956,10 +956,10 @@ class maClient():
         if resp['error']:
             return False
         if ct.body.battle_result.winner == '1':
-            logging.info('战斗胜利o(*￣▽￣*)o ')
+            logging.info('battle success')
             return True
         else:
-            logging.info('输了呢Σ( ° △ °|||)︴ ')
+            logging.info('battle failed ')
             return False
 
     @plugin.func_hook
@@ -996,7 +996,7 @@ class maClient():
                 rare_str
             ))
 
-        logging.info('获得%d张新卡片: %s' % (len(excname), ', '.join(excname)))
+        logging.info('get %d card: %s' % (len(excname), ', '.join(excname)))
         self.player.friendship_point = self.player.friendship_point - 200 * len(excname)
         if ab == '1' and 'auto_compound' in gacha_buy:
             try:
@@ -1007,7 +1007,7 @@ class maClient():
                 for card in autocompcards.compound:
                     mid = card.base_card.master_card_id
                     autocname.append('[' + self.carddb[int(mid)][0] + ']')
-                logging.info('合成了%d张新卡片: %s' % (len(autocname), ', '.join(autocname)))
+                logging.info('merge %d new card: %s' % (len(autocname), ', '.join(autocname)))
             except:
                 logging.debug('gacha:no auto build')
         time.sleep(7.3890560964)
@@ -1054,9 +1054,9 @@ class maClient():
                     self.carddb[int(card.master_card_id)][1])
                 )
         if len(sid) == 0:
-            logging.info('没有要贩卖的卡片')
+            logging.info('none card should be sell')
         else:
-            logging.info('将要贩卖这些卡片：%s' % (', '.join(cinfo)))
+            logging.info('sell cards：%s' % (', '.join(cinfo)))
         if len(warning_card) > 0:
             if self.cfg_sell_card_warning >= 1:
                 logging.warning('存在稀有以上卡片：%s\n真的要继续吗？y/n' % (', '.join(warning_card)))
@@ -1095,11 +1095,11 @@ class maClient():
             # 卖
             paramsell = 'serial_id=%s' % (','.join(se_id))
             slp = random.random() * 4 + len(se_id) * 0.6 + 2
-            logging.sleep('%f秒后卖卡……' % slp)
+            logging.sleep('%f sec sell card' % slp)
             time.sleep(slp)
             resp, ct = self._dopost('trunk/sell', postdata = paramsell)
             if not resp['error']:
-                logging.info('%s(%d张卡片)' % (resp['errmsg'], len(se_id)))
+                logging.info('%s(%d cards)' % (resp['errmsg'], len(se_id)))
         return True
 
     @plugin.func_hook
@@ -1127,14 +1127,14 @@ class maClient():
                         slptime = float(t)
                         break
                 if slptime * slpfactor * 60 < 20:
-                    logging.warning('间隔至少为20秒，但当前设置为%d' % (slptime * 60))
+                    logging.warning('at least 20sec，set = %d' % (slptime * 60))
                     slptime = 1.0 / 3 / slpfactor
                 hour_last = hour_now
             logging.debug('fairy_battle_loop:%d/%d' % (l + 1, looptime))
             self.fairy_select()
             if looptime != l + 1:  # 没有立即刷新
                 s = random.randint(int(60 * slptime * 0.8 * slpfactor), int(60 * slptime * 1.2 * slpfactor))
-                logging.sleep('%d秒后刷新……' % s)
+                logging.sleep('%d sec wait...' % s)
                 time.sleep(s)
 
     @plugin.func_hook
@@ -1201,7 +1201,7 @@ class maClient():
                     logging.debug('fairy_select:sid %s battled in less than 3 min' % fairy.fairy.serial_id)
                     continue
                 fairies.append(fairy)
-        logging.info(len(fairies) == 0 and '木有符合条件的妖精-v-' or '符合条件的有%d只妖精XD' % len(fairies))
+        logging.info(len(fairies) == 0 and 'not found if faires -v-' or 'find %d faires XD' % len(fairies))
         # 依次艹
         for f in fairies:
             logging.debug('fairy_select:select sid %s battled %s' % (f.fairy.serial_id, not f.not_battled))
@@ -1229,12 +1229,12 @@ class maClient():
             rwname = []
             for rw in rws:
                 rwname.append(rw.item_name)
-            logging.info('%s  已获得' % (', '.join(rwname)))
+            logging.info('%s  already get' % (', '.join(rwname)))
 
     @plugin.func_hook
     def _fairy_battle(self, fairy, bt_type = NORMAL_BATTLE, carddeck = None):
         while time.time() - self.lastfairytime < 20:
-            logging.sleep('等待20s战斗冷却')
+            logging.sleep('wait at least 020 sec')
             time.sleep(5)
         def fairy_floor(f = fairy):
             paramfl = 'check=1&%sserial_id=%s&user_id=%s' % (
@@ -1254,7 +1254,7 @@ class maClient():
                 return False
         # 已经挂了
         if fairy.hp == '0':
-            logging.warning('妖精已被消灭')
+            logging.warning('fairy down')
             if fairy.serial_id == self.player.fairy['id']:
                 self.player.fairy = {'id':0, 'alive':False}
             return False
@@ -1285,7 +1285,7 @@ class maClient():
             #    if fairy.race_type == '12':#找不到
             #        disc_name = '公会妖精'
         hms = lambda x:x >= 3600 and time.strftime('%H:%M:%S', time.localtime(x + 16 * 3600)) or time.strftime('%M:%S', time.localtime(x))
-        logging.info('妖精:%sLv%d hp:%d 发现者:%s 小伙伴:%d 剩余%s %s' % (
+        logging.info('fairy:%sLv%d hp:%d finder:%s xiao jiji:%d leave%s %s' % (
             fairy.name, fairy.lv, fairy.hp, disc_name,
             len(f_attackers), hms(fairy.time_limit),
             fairy.wake and 'WAKE!' or''))
@@ -1301,11 +1301,11 @@ class maClient():
                 return False
         # 判断BC
         if self.check_strict_bc() or self.player.bc['current'] < 2:  # strict BC或者BC不足
-            logging.warning('BC不够了TOT')
+            logging.warning('BC bu gou TOT')
             autored = (self.cfg_auto_rt_level == '2') or (self.cfg_auto_rt_level == '1' and fairy.rare_flg == '1')
             if autored:
                 if not self.red_tea(True):
-                    logging.error('那就不打了哟(*￣︶￣)y ')
+                    logging.error('nimabi ')
                     return False
             else:
                 return False
@@ -1322,16 +1322,16 @@ class maClient():
             fairy.serial_id, fairy.discoverer_id)
         resp, ct = self._dopost('exploration/fairybattle', postdata = paramf, savetraffic = savet)
         if len(ct) == 0:
-            logging.info('舔刀卡组，省流模式开启')
+            logging.info('tian dao cards')
         else:
             if resp['error']:
                 return
             elif resp['errno'] == 1050:
-                logging.warning('BC不够了TOT')
+                logging.warning('BC not gou TOT')
                 autored = (self.cfg_auto_rt_level == '2') or (self.cfg_auto_rt_level == '1' and fairy.rare_flg == '1')
                 if autored:
                     if not self.red_tea(True):
-                        logging.error('那就不打了哟(*￣︶￣)y ')
+                        logging.error('nimabi ')
                         return False
                 else:
                     return False
@@ -1363,11 +1363,11 @@ class maClient():
                     if 'item_id' in b:
                         # 收集品 情况1：要通过点击“立即领取”领取的，在sleep之后领取
                         # logging.debug('fairy_battle:type:%s item_id %s count %s'%(b.type,b.item_id,b.item_num))
-                        logging.info('获得收集品[%s] x%s' % (self.player.item.get_name(int(b.item_id)), b.item_num))
+                        logging.info('get wu ping[%s] x%s' % (self.player.item.get_name(int(b.item_id)), b.item_num))
                         nid.append(b.id)
                     else:
                         # logging.debug('fairy_battle:type:%s card_id %s holoflag %s'%(b.type,b.card_id,b.holo_flag))
-                        logging.info('获得卡片 %s%s' % (self.carddb[int(b.card_id)][0], (b.holo_flag == '1' and '(闪)' or '')))
+                        logging.info('get cards %s%s' % (self.carddb[int(b.card_id)][0], (b.holo_flag == '1' and '(闪)' or '')))
                 # 如果是自己的妖精则设为死了
                 if fairy.serial_id == self.player.fairy['id']:
                     self.player.fairy = {'id':0, 'alive':False}
@@ -1386,11 +1386,11 @@ class maClient():
             ))
             # 是否升级
             if not res.before_level == res.after_level:
-                logging.info('升级了：↑%s' % res.after_level)
+                logging.info('lv up: %s' % res.after_level)
             # 收集品 情况2：自动往上加的
             if 'special_item' in res:
                 it = res.special_item
-                logging.info('收集品[%s]:+%d(%s)' % (\
+                logging.info('get[%s]:+%d(%s)' % (\
                     self.player.item.get_name(int(it.item_id)), int(it.after_count) - int(it.before_count), it.after_count))
             # 战斗详情分析
             # <battle_action_list>
@@ -1407,7 +1407,7 @@ class maClient():
                 fatk, matk, satk, rnd = 0, 0, 0, 0
                 skills = []
                 cbos = []
-                skill_type = ['0', 'ATK↑', 'HP↑', '3', '4', '5']
+                skill_type = ['0', 'ATK', 'HP', '3', '4', '5']
                 blist = ct.body.battle_battle.battle_action_list
                 for l in blist:
                     if 'turn' in l:  # 回合数
@@ -1435,11 +1435,11 @@ class maClient():
                             cbos.append('%s.%s' % (
                                 skill_type[int(l.combo_type)], l.combo_name)
                             )
-                logging.info('战斗详情:\nROUND:%d/%d 平均ATK:%.1f/%.1f%s %s %s %s' %
+                logging.info('detail:\nROUND:%d/%d avg ATK:%.1f/%.1f%s %s %s %s' %
                     (math.ceil(rnd), math.floor(rnd),
                     matk / math.ceil(rnd), 0 if rnd < 1 else fatk / math.floor(rnd),
                     ' SUPER:%d' % satk if satk > 0 else '',
-                    res.winner == '1' and '受到伤害:%d' % fatk or '总伤害:%d' % matk,
+                    res.winner == '1' and 'heart:%d' % fatk or 'total heart:%d' % matk,
                     len(cbos) > 0 and '\nCOMBO:%s' % (','.join(cbos)) or '',
                     len(skills) > 0 and '\nSKILL:%s' % (','.join(skills)) or '')
                 )

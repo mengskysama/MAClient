@@ -95,27 +95,27 @@ def read_proxy(work = 0):
             return carddeck
         time.sleep(1)
 
-if __name__ == '__main__':
+def run_ma(argv):
     logging = maclient_logging.Logging('logging')
     if not PYTHON3:
         reload(sys)
         sys.setdefaultencoding('utf-8')
     # ht=httplib2.Http(timeout=30)
-    print(du8('%s%sv%s%s' % ('=' * int((getTerminalSize()[0] - 5 - 18) / 2), '丧心病狂的MA客户端', maclient.__version__, '=' * int((getTerminalSize()[0] - 5 - 18) / 2))))
-    if len(sys.argv) > 2:
-        maclient1 = maclient.maClient(configfile = sys.argv[1], savesession = True)
+    #print(du8('%s%sv%s%s' % ('=' * int((getTerminalSize()[0] - 5 - 18) / 2), '丧心病狂的MA客户端', maclient.__version__, '=' * int((getTerminalSize()[0] - 5 - 18) / 2))))
+    if len(argv) > 2:
+        maclient1 = maclient.maClient(configfile = argv[1], savesession = True)
         # auth()
         dec = maclient1.login()
         maclient1.initplayer(dec)
-        arg = ' '.join(sys.argv[2:])
+        arg = ' '.join(argv[2:])
         pos = arg.find('t:')
         if pos != -1:
             maclient1.tasker(taskname = arg[pos + 2:])
         else:
             maclient1.tasker(cmd = arg)
     else:
-        if len(sys.argv) == 2:
-            maclient1 = maclient.maClient(configfile = sys.argv[1], savesession = True)
+        if len(argv) == 2:
+            maclient1 = maclient.maClient(configfile = argv[1], savesession = True)
         else:
             maclient1 = maclient.maClient(savesession = True)
         # 进入游戏

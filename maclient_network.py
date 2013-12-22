@@ -8,22 +8,23 @@ import sys
 import time
 import base64
 import socket
-import urllib
 import maclient_smart
+
+import maclient_bae
+
 from cross_platform import *
 if PYTHON3:
     import http.client as httplib
     xrange = range
 else:
     import httplib
-try:
-    import httplib2
-except ImportError:
-    print('httplib2 not found in python libs. You can download it here: https://github.com/fffonion/httplib2-plus')
+
+import urllib2
+from urllib2 import HTTPError
+import PKCS1_v1_5
 try:
     from Crypto.Cipher import AES
     from Crypto.PublicKey import RSA
-    from Crypto.Cipher import PKCS1_v1_5
     SLOW_MODE = False
 except ImportError:
     import pyaes as AES
@@ -49,7 +50,7 @@ class Crypt():
     def __init__(self,loc):
         self.init_cipher(loc=loc)
         self.random_cipher_plain=''
-        if loc[:2]=='cn':
+        if loc=='cn':
             self.gen_rsa_pubkey()
 
     def gen_cipher_with_uid(self, uid, loc):
@@ -105,7 +106,9 @@ class Crypt():
             return self.random_cipher.encrypt(pad(bytein))
 
     def encode_rsa_64(self, strin):
-        return base64.encodestring(self.rsa.encrypt(strin))
+        #return maclient_bae.sea_do_ras(strin)
+        d = base64.encodestring(self.rsa.encrypt(strin))
+        return d
 
     def encode_data64(self, bytein, mode):
         res=b2u(base64.encodestring(self.encode_data(bytein, mode))).strip('\n')
@@ -148,7 +151,7 @@ class Crypt():
             pass
 
 #ht = httplib2.Http(timeout = 15,proxy_info = httplib2.ProxyInfo(httplib2.socks.PROXY_TYPE_HTTP_NO_TUNNEL, "192.168.124.1", 23300))
-ht = httplib2.Http(timeout = 15)
+urllib2.socket.setdefaulttimeout(10)
 
 class poster():
     def __init__(self, loc, logger, ua):
@@ -162,8 +165,8 @@ class poster():
         self.rollback_utf8 = sys.platform.startswith('cli') and \
                 (lambda dt:dt.decode('utf-8')) or\
                 (lambda dt:dt)
-        if self.servloc in ['cn','kr']:
-            ht.add_credentials("iW7B5MWJ", "8KdtjVfX")
+        #if self.servloc in ['cn','kr']:
+            #ht.add_credentials("iW7B5MWJ", "8KdtjVfX")
         if ua:
             if '%d' in ua:  # formatted ua
                 self.header['User-Agent'] = ua % getattr(maclient_smart, 'app_ver_%s' % self.servloc)
@@ -231,23 +234,37 @@ class poster():
                 callback_hook = lambda x:x
             while trytime < ttimes:
                 try:
-                    resp, content = ht.request('%s%s%s' % (serv[self.servloc], uri, not noencrypt and '?cyt=1' or ''), method = 'POST', headers = header, body = postdata, callback_hook = callback_hook, chunk_size = None)
+                    r = []
+                    for k, v in header.items():
+                        t = []
+                        t.append(k)
+                        t.append(v)
+                        r.append(t)
+                    req = urllib2.Request('%s%s%s' % (serv[self.servloc], uri, not noencrypt and '?cyt=1' or ''), postdata, header)
+                    fd = urllib2.urlopen(req)
+                    content = fd.read()
+                    resp = fd.headers
+                    #resp, content = ht.request('%s%s%s' % (serv[self.servloc], uri, not noencrypt and '?cyt=1' or ''), method = 'POST', headers = header, body = postdata, callback_hook = callback_hook, chunk_size = None)
+                    dec = self.rollback_utf8(self.crypt.decode_data(content))
+                    if os.path.exists('debug'):
+                        open('debug/%s.xml' % uri.replace('/', '#').replace('?', '~'), 'w').write(dec)
+                        # open('debug/~%s.xml'%uri.replace('/','#').replace('?','~'),'w').write(content)
+
+                    if setcookie and 'set-cookie' in resp:
+                        self.cookie = resp['set-cookie'].split(',')[-1].rstrip('path=/').strip()
+                    # print self.cookie
+                    resp = {'status' : 200}
+                    return resp, dec
                 except socket.error as e:
                     if e.errno == None:
                         err = 'Timed out'
                     else:
                         err = e.errno
                     self.logger.warning('post:%s got socket error:%s, retrying in %d times' % (uri, err, ttimes - trytime))
-                except httplib.ResponseNotReady:
-                    # socket重置，不计入重试次数
-                    trytime -= 1
-                    self.logger.warning('post:socket closed, retrying in %d times' % (ttimes - trytime))
-                except httplib2.ServerNotFoundError:
-                    self.logger.warning('post:no internet, retrying in %d times' % (ttimes - trytime))
-                except TypeError:  # 使用了官方版的httplib2
-                    if savetraffic and self.issavetraffic:
-                        self.logger.warning(du8('你正在使用官方版的httplib2，因此省流模式将无法正常工作'))
-                    resp, content = ht.request('%s%s%s' % (serv[self.servloc], uri, not noencrypt and '?cyt=1' or ''), method = 'POST', headers = header, body = postdata)
+                except HTTPError, e:
+                    self.logger.warning('post:%s except errcode' % (uri, e.code))
+                except :
+                    self.logger.warning('post:%s except' % (uri))
                     break
                 else:
                     if int(resp['status']) < 400:
@@ -256,27 +273,8 @@ class poster():
                 resp, content = {'status':'600'}, ''
                 trytime += 1
                 time.sleep(2.718281828 * trytime)
-            if not 'content-length' in resp:
-                resp['content-length'] = str(len(content))
-            # 状态码判断
-            if int(resp['status']) > 400:
-                self.logger.error('post:%s %s' % (uri, ','.join([ (i in resp and (i + ':' + resp[i]) or '')for i in ['status', 'content-length', 'set-cookie']]) + du8('\n请到信号良好的地方重试【←←')))
-                resp.update({'error':True, 'errno':resp['status'], 'errmsg':'Client or server error.'})
-                return resp, content
-            else:
-                self.logger.debug('post:%s content-length:%s%s' % (uri, resp['content-length'], ('set-cookie' in resp and (' set-cookie:%s' % resp['set-cookie']) or '')))
-            # 省流模式
-            if savetraffic and self.issavetraffic:
-                return resp, content
-            # 否则解码
-            dec = self.rollback_utf8(self.crypt.decode_data(content))
-            if os.path.exists('debug'):
-                open('debug/%s.xml' % uri.replace('/', '#').replace('?', '~'), 'w').write(dec)
-                # open('debug/~%s.xml'%uri.replace('/','#').replace('?','~'),'w').write(content)
-            if setcookie and 'set-cookie' in resp:
-                self.cookie = resp['set-cookie'].split(',')[-1].rstrip('path=/').strip()
-            # print self.cookie
-            return resp, dec
+            return resp, content
+
 
 if __name__ == "__main__":
     p = Crypt('cn')
