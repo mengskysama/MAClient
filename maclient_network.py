@@ -169,8 +169,8 @@ class poster():
                 self.header['User-Agent'] = ua % getattr(maclient_smart, 'app_ver_%s' % self.servloc)
             else:
                 self.header['User-Agent'] = ua
-        else:
-            self.header['User-Agent'] = self.header['User-Agent'] % getattr(maclient_smart, 'app_ver_%s' % self.servloc)
+        #else:
+        #    self.header['User-Agent'] = self.header['User-Agent'] % getattr(maclient_smart, 'app_ver_%s' % self.servloc)
         if SLOW_MODE:
             self.logger.warning(du8('post:没有安装pycrypto库，可能将额外耗费大量时间'))
         self.issavetraffic = False
