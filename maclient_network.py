@@ -282,7 +282,18 @@ class poster():
                 except TypeError:  # 使用了官方版的httplib2
                     if savetraffic and self.issavetraffic:
                         self.logger.warning(du8('你正在使用官方版的httplib2，因此省流模式将无法正常工作'))
-                    resp, content = self.ht.request('%s%s%s' % (serv[self.servloc], uri, not noencrypt and '?cyt=1' or ''), method = 'POST', headers = header, body = postdata)
+                    try:
+                        resp, content = self.ht.request('%s%s%s' % (serv[self.servloc], uri, not noencrypt and '?cyt=1' or ''), method = 'POST', headers = header, body = postdata)
+                    except socket.error as e:
+                        if e.errno == None:
+                            err = 'Timed out'
+                        else:
+                            err = e.errno
+                        self.logger.warning('post:%s got socket error:%s, retrying in %d times' % (uri, err, ttimes - trytime))
+                        resp, content = {'status':'600'}, ''
+                        trytime += 1
+                        time.sleep(2.718281828 * trytime)
+                        continue
                     break
                 else:
                     if int(resp['status']) < 400:
